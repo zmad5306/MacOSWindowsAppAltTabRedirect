@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Generated application bundles and archives
+dist/
+*.app
+*.dSYM/
+*.zip
+
+# Local diagnostics and editor files
+*.log
+*.swp
+*~
+.vscode/
+.idea/
