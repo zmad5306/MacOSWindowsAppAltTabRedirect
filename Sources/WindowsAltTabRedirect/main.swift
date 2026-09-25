@@ -5,8 +5,7 @@ private let enabledDefaultsKey = "redirectEnabled"
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarController: MenuBarController!
     private var sessionDetector: SessionDetector!
-    private let eventTapController = EventTapController()
-    private let hidKeyRemapper = HIDKeyRemapper()
+    private let karabiner = KarabinerIntegration()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         UserDefaults.standard.register(defaults: [enabledDefaultsKey: true])
@@ -32,14 +31,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             isEnabled: { UserDefaults.standard.bool(forKey: enabledDefaultsKey) },
             onStatusChange: { [weak self] status in
                 guard let self else { return }
-                self.menuBarController.update(status: status)
-                self.eventTapController.isEligible = status == .active
-                _ = self.hidKeyRemapper.setActive(status == .active)
-                Diagnostics.shared.set("eligible", status == .active ? "true" : "false")
-                if AccessibilityPermission.isGranted, !self.eventTapController.isRunning {
-                    let started = self.eventTapController.start()
-                    Diagnostics.shared.set("eventTapStart", started ? "succeeded" : "failed")
-                }
+                let karabinerReady = self.karabiner.prepareIfPossible()
+                let active = karabinerReady && status == .active
+                self.karabiner.setActive(active)
+                self.menuBarController.update(
+                    status: karabinerReady ? status : .karabinerRequired
+                )
+                Diagnostics.shared.set("eligible", active ? "true" : "false")
             }
         )
 
@@ -47,17 +45,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             AccessibilityPermission.request()
         }
         sessionDetector.start()
-        if AccessibilityPermission.isGranted, !eventTapController.isRunning {
-            let started = eventTapController.start()
-            Diagnostics.shared.set("eventTapStart", started ? "succeeded" : "failed")
-        }
-        menuBarController.update(status: sessionDetector.status)
+        menuBarController.update(
+            status: karabiner.prepareIfPossible()
+                ? sessionDetector.status
+                : .karabinerRequired
+        )
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        hidKeyRemapper.restore()
         sessionDetector.stop()
-        eventTapController.stop()
+        karabiner.setActive(false)
     }
 }
 

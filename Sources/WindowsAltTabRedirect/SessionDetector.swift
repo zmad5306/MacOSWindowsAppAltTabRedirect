@@ -3,6 +3,7 @@ import AppKit
 import ApplicationServices
 
 enum SessionStatus: Equatable {
+    case karabinerRequired
     case paused
     case permissionRequired
     case windowsAppNotFocused
@@ -12,6 +13,7 @@ enum SessionStatus: Equatable {
 
     var description: String {
         switch self {
+        case .karabinerRequired: return "Karabiner setup required"
         case .paused: return "Paused"
         case .permissionRequired: return "Accessibility permission required"
         case .windowsAppNotFocused: return "Windows App is not focused"
